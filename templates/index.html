@@ -1,0 +1,908 @@
+<html>
+  <head>
+    <title>3D Model Viewer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/PLYLoader.js"></script>
+
+    <style>
+      /* Page Layout & Typography */
+      @font-face {
+        font-family: "Minecraftia";
+        src: url("/static/Minecraftia.ttf") format("truetype");
+        font-weight: normal;
+        font-style: normal;
+      }
+
+      body {
+        margin: 0;
+        overflow: hidden;
+      }
+
+      .sidebar-down {
+        position: fixed;
+        top: 80%;
+        left: 30%;
+        transform: translateY(-50%);
+        display: flex;
+        flex-direction: row;
+        gap: 15px;
+        z-index: 10;
+      }
+
+      .glass-btn {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.2); 
+        color: #fff;
+        font-size: 24px;
+        font-family: "Minecraftia";
+        backdrop-filter: blur(10px);
+        box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3j,j);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        min-width: 200px;
+      }
+
+      .glass-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: scale(1.05);
+      }
+
+      .subheading {
+        position: fixed;
+        top: 190px;
+        left: 65%;
+        transform: translateX(-50%);
+        font-size: 20px;
+        color: #472b1bbd;
+        font-family: "Minecraftia";
+        z-index: 10;
+      }
+
+      /* Base Overlay Styling */
+      .popup {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 100;
+      }
+
+      .popup-content {
+        background-image: url("static/pink_retro.jpg");
+        background-size: cover;
+        backdrop-filter: blur(10px);
+        border-radius: 12px;
+        padding: 20px;
+        width: 500px;
+        height: 300px;
+        margin: 100px auto;
+        font-family: "Minecraftia", sans-serif;
+        text-align: center;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        position: relative;
+      }
+
+      .popup-picture {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 0px;
+        left: 50%;
+      }
+
+      .popup-picture img {
+        width: 200px;
+        height: 250px;
+        border-radius: 10%;
+        margin: 10px auto;
+        border: 2px solid #fff;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      }
+
+      .star-icon {
+        position: absolute;
+        top: 220px;
+        right: 5px;
+        width: 110px;
+        height: auto;
+      }
+
+      .bar-code-icon {
+        position: absolute;
+        top: 285px;
+        left: 20px;
+        width: 160px;
+        height: auto;
+      }
+
+      .popup-text h2 {
+        margin: 0;
+        font-size: 20px;
+        color: #4f0c0c;
+      }
+
+      .popup-p {
+        color: #4f0c0c;
+        font-size: 14px;
+        line-height: 1;
+        text-align: left;
+        margin-left: 20px;
+        background: rgb(255, 255, 255);
+        border-radius: 8px;
+        padding: 10px;
+      }
+
+      .close-btn {
+        margin-top: 5px;
+        padding: 8px 16px;
+        border: none;
+        border-radius: 8px;
+        background: #c9184a;
+        color: #fff;
+        cursor: pointer;
+        position: absolute;
+        top: 10px;
+        right: 10px;
+      }
+
+      .close-btn:hover {
+        background: #a0103a;
+      }
+
+      /* Contact Popup */
+      .contact-popup {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 100;
+      }
+
+      .contact-popup-content {
+        background-image: url("static/contact.png");
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        padding: 20px;
+        width: 600px;
+        height: 500px;
+        margin: 100px auto;
+        font-family: "Minecraftia", sans-serif;
+        text-align: center;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .contact-popup-content h2 {
+        margin: 0;
+        font-size: 24px;
+        color: #4f0c0c;
+        position: absolute;
+        top: 100px;
+        left: 25%;
+      }
+
+      .contact-info p {
+        color: #4f0c0c;
+        font-size: 15px;
+        line-height: 1.9;
+        position: absolute;
+        top: 200px;
+        left: 23%;
+        text-align: left;
+        width: 350px;
+      }
+
+      .contact-info p:nth-child(1) { top: 140px; font-weight: bold; }
+      .contact-info p:nth-child(2) { top: 200px; }
+      .contact-info p:nth-child(3) { top: 240px; font-size: 14px; line-height: 2.5; }
+      .contact-info p:nth-child(4) { top: 310px; left: 28%; }
+      .contact-info p:nth-child(5) { top: 340px; left: 28%; }
+      .contact-info p:nth-child(6) { top: 370px; left: 28%; }
+
+      .contact-close-btn {
+        margin-top: 5px;
+        padding: 8px 16px;
+        border: none;
+        border-radius: 8px;
+        background: #265017;
+        color: #fff;
+        cursor: pointer;
+        position: absolute;
+        bottom: 80px;
+        right: 45%;
+      }
+
+      .contact-close-btn:hover { background: #a0103a; }
+
+      /* Mother (Work) Popup */
+      .work-popup {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 100;
+      }
+
+      .work-popup-content {
+        background-image: url("static/work.png");
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        padding: 20px;
+        width: 400px;
+        height: 500px;
+        margin: 100px auto;
+        font-family: "Minecraftia", sans-serif;
+        text-align: center;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .work-info button {
+        font-size: 15px;
+        margin-top: 10px;
+        padding: 10px 20px;
+        min-width: 200px;
+        border: none;
+        border-radius: 8px;
+        background: #723823;
+        color: #fff;
+        cursor: pointer;
+        position: relative;
+        top: 200px;
+        left: 25%;
+        transform: translateX(-50%);
+      }
+
+      .work-close-btn {
+        margin-top: 5px;
+        padding: 8px 16px;
+        border: none;
+        border-radius: 8px;
+        background: #792619;
+        color: #fff;
+        cursor: pointer;
+        position: absolute;
+        bottom: 80px;
+        right: 45%;
+      }
+
+      .work-info button:hover {
+        background: #8a0b2f;
+        transform: translateX(-50%) scale(1.05);
+      }
+
+      .work-popup-content h2 {
+        margin: 0;
+        font-size: 24px;
+        color: #4f0c0c;
+        position: absolute;
+        top: 100px;
+        left: 20%;
+      }
+
+      .work-info p {
+        color: #4f0c0c;
+        font-size: 15px;
+        line-height: 1.9;
+        position: absolute;
+        top: 125px;
+        left: 20%;
+        text-align: left;
+        width: 290px;
+      }
+
+      /* Scroll Child Popups Pixel Perfect Layout */
+      /* Scroll Child Popups — Scaled Up & Centered */
+/* Scroll Child Popups — Expanded PNG Background around fixed elements */
+.popup-upper,
+.popup-circle,
+.popup-triangle {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 100;
+}
+
+.popup-upper .popup-content,
+.popup-circle .popup-content,
+.popup-triangle .popup-content {
+  background-image: url("static/uppercase.png");
+  background-size: 100% 100%;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-color: transparent;
+
+  /* Resets overlay styles */
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: none !important;
+  box-shadow: none !important;
+
+  /* Expanded PNG dimensions (taller & wider PNG) */
+  width: 560px !important;
+  height: 720px !important;
+
+  /* Fixed screen centering */
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  margin: 0 !important;
+
+  /* Generous top & bottom padding so elements sit comfortably inside the enlarged parchment */
+  padding: 135px 80px 120px 80px !important;
+  font-family: "Minecraftia", sans-serif;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 3px;
+  box-sizing: border-box;
+}
+
+/* Original Element Sizes Preserved */
+.popup-title {
+  margin: 0;
+  font-size: 20px;
+  color: #4f0c0c;
+  line-height: 1;
+}
+
+.popup-instruction {
+  font-size: 12px;
+  color: #4f0c0c;
+  margin: 0;
+  text-align: center;
+}
+
+.tool-input {
+  width: 280px; /* Fixed px width so it doesn't stretch or distort */
+  padding: 10px;
+  font-family: "Minecraftia", sans-serif;
+  font-size: 13px;
+  border: 2px solid #723823;
+  border-radius: 6px;
+  outline: none;
+  margin: 0;
+  text-align: center;
+  box-sizing: border-box;
+  background: #ffffff;
+  position: relative;
+  top: 20px;
+}
+
+.tool-btn {
+  width: 180px;
+  padding: 8px 16px;
+  font-family: "Minecraftia", sans-serif;
+  font-size: 13px;
+  background: #723823;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: transform 0.2s, background 0.2s;
+  margin: 0;
+  position: relative;
+  top: 20px;
+}
+
+.tool-btn:hover {
+  background: #8a0b2f;
+  transform: scale(1.03);
+}
+
+.result-box {
+  width: 280px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 2px dashed #723823;
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: #4f0c0c;
+  font-size: 12px;
+  word-break: break-word;
+  box-sizing: border-box;
+  margin: 0;
+  position: relative;
+  top: 20px;
+}
+
+.result-text {
+  margin: 4px 0 0 0;
+  font-size: 14px;
+  font-weight: bold;
+  color: #723823;
+}
+
+.visual-canvas {
+  margin: 0;
+  border: 1px solid #723823;
+  border-radius: 6px;
+  background: #fff8f0;
+}
+
+/* Position Close Button at Bottom-Center relative to the Parchment PNG */
+.popup-upper .close-btn,
+.popup-circle .close-btn,
+.popup-triangle .close-btn {
+  color: #fff;
+  background: #723823;
+  
+  /* Absolute positioning relative to .popup-content */
+  position: absolute !important;
+  top: 550px !important; /* Adjust this value (e.g., 70px to 95px) to move it up or down */
+  left: 50% !important;
+  transform: translateX(-50%) !important; 
+  
+  width: 110px;
+  height: 50px;
+  padding: 8px 16px;
+  font-family: "Minecraftia", sans-serif;
+  font-size: 12px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.popup-upper .close-btn:hover,
+.popup-circle .close-btn:hover,
+.popup-triangle .close-btn:hover {
+  background: #8a0b2f;
+  transform: translateX(-50%) scale(1.05) !important;
+}
+    </style>
+  </head>
+
+  <body>
+    <h2 class="subheading">-and to my programming works</h2>
+
+    <!-- Sidebar buttons -->
+    <div class="sidebar-down">
+      <button class="glass-btn">Profile</button>
+      <button class="glass-btn">Contact</button>
+      <button class="glass-btn">Work</button>
+    </div>
+
+    <!-- Profile Popup -->
+    <div id="profile-popup" class="popup">
+      <div class="popup-content">
+        <img src="/static/star.png" alt="Star Icon" class="star-icon" />
+        <img src="/static/bar_code.png" alt="Bar Code" class="bar-code-icon" />
+        <div class="popup-picture">
+          <img src="/static/profile.jpg" alt="Profile Photo" />
+          <div class="popup-text">
+            <h2>Personal Information</h2>
+            <div class="popup-p">
+              <p>NAME: Villaverde, Princess Jane M.</p>
+              <p>AGE: 19 years old</p>
+              <p>
+                ADDRESS: B2 L4, Greenforest, Brgy. Dela Paz, Antipolo City,
+                Rizal, 1870, Philippines
+              </p>
+              <p>COURSE: Bachelor of Science in Computer Engineering</p>
+            </div>
+          </div>
+        </div>
+        <button class="close-btn">X</button>
+      </div>
+    </div>
+
+    <!-- Contact Popup -->
+    <div id="contact-popup" class="contact-popup">
+      <div class="contact-popup-content">
+        <h2>Contact Information:</h2>
+        <div class="contact-info">
+          <p>Feel free to reach out to me through the following channels:</p>
+          <p>Email/Webmail:</p>
+          <p>
+            princessvillaverde08@gmail.com
+            princessjanemvillaverde@iskolar.bayan.pup.edu.ph
+          </p>
+          <p>Phone: +63 912 345 6789</p>
+          <p>Facebook: princessjane.villaverde.3</p>
+          <p>Instagram: @yourhighness.noshi</p>
+        </div>
+        <button class="contact-close-btn">X</button>
+      </div>
+    </div>
+
+    <!-- Main Work (Mother) Popup -->
+    <div id="work-popup" class="work-popup">
+      <div class="work-popup-content">
+        <h2>My Work</h2>
+        <div class="work-info">
+          <p>Here are some of my programming projects:</p>
+          <div class="work-buttons">
+            <button id="upper-btn" class="glass-btn">To Upper Case</button>
+            <button id="circle-btn" class="glass-btn">Area of a Circle</button>
+            <button id="triangle-btn" class="glass-btn">Area of a Triangle</button>
+          </div>
+        </div>
+        <button class="work-close-btn">X</button>
+      </div>
+    </div>
+
+    <!-- To Upper Case Popup -->
+    <div id="upper-popup" class="popup-upper">
+      <div class="popup-content">
+        <h2 class="popup-title">To Upper Case</h2>
+        <p class="popup-instruction">Insert text to convert to upper case:</p>
+        <input type="text" id="upper-input" class="tool-input" placeholder="Type here..." />
+        <button id="convert-btn" class="tool-btn">Convert</button>
+
+        <div class="result-box">
+          <span>Result:</span>
+          <p id="upper-result" class="result-text">-</p>
+        </div>
+
+        <button class="close-btn">Close</button>
+      </div>
+    </div>
+
+    <!-- Area of a Circle Popup -->
+    <div id="circle-popup" class="popup-circle">
+      <div class="popup-content">
+        <h2 class="popup-title">Area of a Circle</h2>
+        <p class="popup-instruction">Formula: πr² | Enter Radius (r):</p>
+        <input type="number" id="circle-radius" class="tool-input" placeholder="Radius (r)..." min="0" step="any" />
+        <button id="calc-circle-btn" class="tool-btn">Calculate</button>
+
+        <div class="result-box">
+          <span>Calculated Area:</span>
+          <p id="circle-result" class="result-text">-</p>
+        </div>
+
+        <canvas id="circle-canvas" class="visual-canvas" width="170" height="90"></canvas>
+
+        <button class="close-btn">Close</button>
+      </div>
+    </div>
+
+    <!-- Area of a Triangle Popup -->
+    <div id="triangle-popup" class="popup-triangle">
+      <div class="popup-content">
+        <h2 class="popup-title">Area of a Triangle</h2>
+        <p class="popup-instruction">Formula: ½ × Base × Height</p>
+        <input type="number" id="triangle-base" class="tool-input" placeholder="Base (b)..." min="0" step="any" />
+        <input type="number" id="triangle-height" class="tool-input" placeholder="Height (h)..." min="0" step="any" />
+        <button id="calc-triangle-btn" class="tool-btn">Calculate</button>
+
+        <div class="result-box">
+          <span>Calculated Area:</span>
+          <p id="triangle-result" class="result-text">-</p>
+        </div>
+
+        <canvas id="triangle-canvas" class="visual-canvas" width="170" height="80"></canvas>
+
+        <button class="close-btn">Close</button>
+      </div>
+    </div>
+
+    <script>
+      // --- Three.js Background & 3D Model Setup ---
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        1000
+      );
+      camera.position.set(0, 0, 200);
+
+      const video = document.createElement("video");
+      video.src = "/static/ghibli.mp4";
+      video.loop = true;
+      video.muted = true;
+      video.play();
+
+      const videoTexture = new THREE.VideoTexture(video);
+      videoTexture.minFilter = THREE.LinearFilter;
+      videoTexture.magFilter = THREE.LinearFilter;
+      videoTexture.format = THREE.RGBFormat;
+      scene.background = videoTexture;
+
+      const renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.outputEncoding = THREE.sRGBEncoding;
+      document.body.appendChild(renderer.domElement);
+
+      const ambientLight = new THREE.AmbientLight(0xfff9d8, 0.2);
+      scene.add(ambientLight);
+
+      const fontLoader = new THREE.FontLoader();
+      fontLoader.load("/static/Minecraft.json", function (font) {
+        const textGeo = new THREE.TextGeometry("WELCOME TO MY WEBSITE", {
+          font: font,
+          size: 15,
+          height: 2,
+        });
+        textGeo.center();
+
+        const textMaterial = new THREE.MeshPhongMaterial({
+          color: 0xc9184a,
+          shininess: 25,
+          specular: 0xffffff,
+        });
+        const textMesh = new THREE.Mesh(textGeo, textMaterial);
+        textMesh.position.set(0, 90, 0);
+        scene.add(textMesh);
+      });
+
+      const spotLight = new THREE.SpotLight(
+        0xffffff,
+        1.5,
+        1000,
+        Math.PI / 2,
+        0.5,
+        2
+      );
+      spotLight.position.set(-100, 100, 100);
+      scene.add(spotLight);
+
+      function animateLight() {
+        requestAnimationFrame(animateLight);
+        spotLight.position.x = Math.sin(Date.now() * 0.001) * 150;
+      }
+      animateLight();
+
+      const loader = new THREE.PLYLoader();
+      loader.load("/static/yourMesh.ply", function (geometry) {
+        geometry.computeVertexNormals();
+        geometry.center();
+        const material = new THREE.MeshStandardMaterial({
+          vertexColors: true,
+          roughness: 0.1,
+          metalness: 0.1,
+        });
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.scale.set(2, 2, 2);
+        scene.add(mesh);
+
+        function animate() {
+          requestAnimationFrame(animate);
+          mesh.rotation.y += 0.01;
+          renderer.render(scene, camera);
+        }
+        animate();
+      });
+
+      window.addEventListener("resize", () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+
+      // --- Profile Popup Controls ---
+      const profileBtn = document.querySelector(".sidebar-down .glass-btn:nth-child(1)");
+      const profilePopup = document.getElementById("profile-popup");
+      const closeProfileBtn = profilePopup.querySelector(".close-btn");
+
+      profileBtn.addEventListener("click", () => { profilePopup.style.display = "block"; });
+      closeProfileBtn.addEventListener("click", () => { profilePopup.style.display = "none"; });
+      profilePopup.addEventListener("click", (e) => {
+        if (e.target === profilePopup) profilePopup.style.display = "none";
+      });
+
+      // --- Contact Popup Controls ---
+      const contactBtn = document.querySelector(".sidebar-down .glass-btn:nth-child(2)");
+      const contactPopup = document.getElementById("contact-popup");
+      const closeContactBtn = contactPopup.querySelector(".contact-close-btn");
+
+      contactBtn.addEventListener("click", () => { contactPopup.style.display = "block"; });
+      closeContactBtn.addEventListener("click", () => { contactPopup.style.display = "none"; });
+      contactPopup.addEventListener("click", (e) => {
+        if (e.target === contactPopup) contactPopup.style.display = "none";
+      });
+
+      // --- Work (Mother) & Child Popup Navigation ---
+      const workBtn = document.querySelector(".sidebar-down .glass-btn:nth-child(3)");
+      const workPopup = document.getElementById("work-popup");
+      const closeWorkBtn = workPopup.querySelector(".work-close-btn");
+
+      workBtn.addEventListener("click", () => { workPopup.style.display = "block"; });
+      closeWorkBtn.addEventListener("click", () => { workPopup.style.display = "none"; });
+      workPopup.addEventListener("click", (e) => {
+        if (e.target === workPopup) workPopup.style.display = "none";
+      });
+
+      // Open Child Popups & Hide Mother
+      document.getElementById("upper-btn").onclick = () => {
+        workPopup.style.display = "none";
+        document.getElementById("upper-popup").style.display = "block";
+      };
+
+      document.getElementById("circle-btn").onclick = () => {
+        workPopup.style.display = "none";
+        document.getElementById("circle-popup").style.display = "block";
+        drawCircleGraph(0);
+      };
+
+      document.getElementById("triangle-btn").onclick = () => {
+        workPopup.style.display = "none";
+        document.getElementById("triangle-popup").style.display = "block";
+        drawTriangleGraph(0, 0);
+      };
+
+      // Close Child Popups & Return to Mother
+      document
+        .querySelectorAll(".popup-upper, .popup-circle, .popup-triangle")
+        .forEach((childPopup) => {
+          const childCloseBtn = childPopup.querySelector(".close-btn");
+          if (childCloseBtn) {
+            childCloseBtn.onclick = () => {
+              childPopup.style.display = "none";
+              workPopup.style.display = "block";
+            };
+          }
+          childPopup.addEventListener("click", (e) => {
+            if (e.target === childPopup) {
+              childPopup.style.display = "none";
+              workPopup.style.display = "block";
+            }
+          });
+        });
+
+      // --- 1. Upper Case Converter Logic ---
+      const upperInput = document.getElementById("upper-input");
+      const convertBtn = document.getElementById("convert-btn");
+      const upperResult = document.getElementById("upper-result");
+
+      function convertToUppercase() {
+        const text = upperInput.value.trim();
+        upperResult.textContent = text !== "" ? text.toUpperCase() : "-";
+      }
+
+      convertBtn.addEventListener("click", convertToUppercase);
+      
+
+      // --- 2. Area of Circle Calculation & Canvas Graphing ---
+      const circleRadiusInput = document.getElementById("circle-radius");
+      const calcCircleBtn = document.getElementById("calc-circle-btn");
+      const circleResult = document.getElementById("circle-result");
+
+      function processCircle() {
+        const r = parseFloat(circleRadiusInput.value);
+        if (!isNaN(r) && r > 0) {
+          const area = Math.PI * r * r;
+          circleResult.textContent = `${area.toFixed(2)} sq. units`;
+          drawCircleGraph(r);
+        } else {
+          circleResult.textContent = "Please enter valid radius!";
+          drawCircleGraph(0);
+        }
+      }
+
+      calcCircleBtn.addEventListener("click", processCircle);
+      circleRadiusInput.addEventListener("input", processCircle);
+
+      function drawCircleGraph(r) {
+        const canvas = document.getElementById("circle-canvas");
+        const ctx = canvas.getContext("2d");
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        const maxRadius = Math.min(centerX, centerY) - 15;
+
+        const drawRadius = r > 0 ? Math.min(Math.max(r * 4, 12), maxRadius) : 25;
+
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, drawRadius, 0, 2 * Math.PI);
+        ctx.fillStyle = "rgba(201, 24, 74, 0.2)";
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = "#723823";
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.lineTo(centerX + drawRadius, centerY);
+        ctx.strokeStyle = "#c9184a";
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 3, 0, 2 * Math.PI);
+        ctx.fillStyle = "#723823";
+        ctx.fill();
+
+        ctx.font = "10px Minecraftia, sans-serif";
+        ctx.fillStyle = "#4f0c0c";
+        ctx.fillText(r > 0 ? `r = ${r}` : "r", centerX + drawRadius / 4, centerY - 4);
+      }
+
+      // --- 3. Area of Triangle Calculation & Canvas Graphing ---
+      const triangleBaseInput = document.getElementById("triangle-base");
+      const triangleHeightInput = document.getElementById("triangle-height");
+      const calcTriangleBtn = document.getElementById("calc-triangle-btn");
+      const triangleResult = document.getElementById("triangle-result");
+
+      function processTriangle() {
+        const b = parseFloat(triangleBaseInput.value);
+        const h = parseFloat(triangleHeightInput.value);
+
+        if (!isNaN(b) && !isNaN(h) && b > 0 && h > 0) {
+          const area = 0.5 * b * h;
+          triangleResult.textContent = `${area.toFixed(2)} sq. units`;
+          drawTriangleGraph(b, h);
+        } else {
+          triangleResult.textContent = "Enter valid Base & Height!";
+          drawTriangleGraph(0, 0);
+        }
+      }
+
+      calcTriangleBtn.addEventListener("click", processTriangle);
+      triangleBaseInput.addEventListener("input", processTriangle);
+      triangleHeightInput.addEventListener("input", processTriangle);
+
+      function drawTriangleGraph(b, h) {
+        const canvas = document.getElementById("triangle-canvas");
+        const ctx = canvas.getContext("2d");
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        const margin = 15;
+        const availableW = canvas.width - margin * 2;
+        const availableH = canvas.height - margin * 2;
+
+        let drawB = b > 0 ? b : 10;
+        let drawH = h > 0 ? h : 10;
+
+        const scale = Math.min(availableW / drawB, availableH / drawH);
+        const renderW = drawB * scale;
+        const renderH = drawH * scale;
+
+        const x1 = (canvas.width - renderW) / 2;
+        const y1 = canvas.height - margin;
+        const x2 = x1 + renderW;
+        const y2 = y1;
+        const x3 = x1 + renderW / 2;
+        const y3 = y1 - renderH;
+
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.lineTo(x3, y3);
+        ctx.closePath();
+        ctx.fillStyle = "rgba(114, 56, 35, 0.2)";
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = "#723823";
+        ctx.stroke();
+
+        ctx.font = "9px Minecraftia, sans-serif";
+        ctx.fillStyle = "#4f0c0c";
+        ctx.fillText(b > 0 ? `b=${b}` : "b", x1 + renderW / 2 - 8, y1 + 12);
+
+        ctx.beginPath();
+        ctx.setLineDash([3, 3]);
+        ctx.moveTo(x3, y3);
+        ctx.lineTo(x3, y1);
+        ctx.strokeStyle = "#c9184a";
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.fillText(h > 0 ? `h=${h}` : "h", x3 + 3, y3 + renderH / 2);
+      }
+    </script>
+  </body>
+</html>
