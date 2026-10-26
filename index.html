@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>3D Model Viewer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/PLYLoader.js"></script>
+    <style>
+      @font-face {
+        font-family: "Minecraftia";
+        src: url("/static/Minecraftia.ttf") format("truetype");
+        font-weight: normal;
+        font-style: normal;
+      }
+
+      body {
+        margin: 0;
+        overflow: hidden;
+      }
+
+      .sidebar-down {
+        position: fixed;
+        top: 90%;
+        left: 30%;
+        transform: translateY(-50%);
+        display: flex;
+        flex-direction: row;
+        gap: 15px;
+        z-index: 1000;
+      }
+
+      .glass-btn {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.2); 
+        color: #fff;
+        font-size: 24px;
+        font-family: "Minecraftia";
+        backdrop-filter: blur(10px);
+        box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        min-width: 200px;
+      }
+
+      .glass-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: scale(1.05);
+      }
+
+      .subheading {
+        position: fixed;
+        top: 190px;
+        left: 65%;
+        transform: translateX(-50%);
+        font-size: 20px;
+        color: #472b1bbd;
+        font-family: "Minecraftia";
+        z-index: 10;
+      }
+
+      .popup, .contact-popup, .work-popup,
+      .popup-upper, .popup-circle, .popup-triangle, .popup-linkedlist, .popup-infix, .popup-queue, .popup-deque {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 100;
+      }
+
+      .popup-content {
+        background-image: url("/static/pink_retro.jpg");
+        background-size: cover;
+        backdrop-filter: blur(10px);
+        border-radius: 12px;
+        padding: 20px;
+        width: 500px;
+        height: 300px;
+        margin: 100px auto;
+        font-family: "Minecraftia", sans-serif;
+        text-align: center;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        position: relative;
+        top: 130px;
+      }
+
+      .popup-picture {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 0px;
+      }
+
+      .popup-picture img {
+        width: 200px;
+        height: 250px;
+        border-radius: 10%;
+        margin: 10px auto;
+        border: 2px solid #fff;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      }
+
+      .star-icon {
+        position: absolute;
+        top: 220px;
+        right: 5px;
+        width: 110px;
+        height: auto;
+      }
+
+      .bar-code-icon {
+        position: absolute;
+        top: 285px;
+        left: 20px;
+        width: 160px;
+        height: auto;
+      }
+
+      .popup-text h2 {
+        margin: 0;
+        font-size: 20px;
+        color: #4f0c0c;
+      }
+
+      .popup-p {
+        color: #4f0c0c;
+        font-size: 14px;
+        line-height: 1;
+        text-align: left;
+        margin-left: 20px;
+        background: rgb(255, 255, 255);
+        border-radius: 8px;
+        padding: 10px;
+      }
+
+      .close-btn {
+        margin-top: 5px;
+        padding: 8px 16px;
+        border: none;
+        border-radius: 8px;
+        background: #c9184a;
+        color: #fff;
+        cursor: pointer;
+        position: absolute;
+        top: 10px;
+        right: 10px;
+      }
+
+      .contact-popup-content {
+        background-image: url("/static/contact.png");
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        padding: 20px;
+        width: 600px;
+        height: 500px;
+        margin: 100px auto;
+        font-family: "Minecraftia", sans-serif;
+        text-align: center;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .contact-popup-content h2 {
+        margin: 0;
+        font-size: 24px;
+        color: #4f0c0c;
+        position: absolute;
+        top: 100px;
+        left: 25%;
+      }
+
+      .contact-info p {
+        color: #4f0c0c;
+        font-size: 15px;
+        line-height: 1.9;
+        position: absolute;
+        top: 200px;
+        left: 23%;
+        text-align: left;
+        width: 350px;
+      }
+
+      .contact-info p:nth-child(1) { top: 140px; font-weight: bold; }
+      .contact-info p:nth-child(2) { top: 200px; }
+      .contact-info p:nth-child(3) { top: 240px; font-size: 14px; line-height: 2.5; }
+      .contact-info p:nth-child(4) { top: 310px; left: 28%; }
+      .contact-info p:nth-child(5) { top: 340px; left: 28%; }
+      .contact-info p:nth-child(6) { top: 370px; left: 28%; }
+
+      .contact-close-btn {
+        margin-top: 5px;
+        padding: 8px 16px;
+        border: none;
+        border-radius: 8px;
+        background: #265017;
+        color: #fff;
+        cursor: pointer;
+        position: absolute;
+        bottom: 80px;
+        right: 45%;
+      }
+
+      .work-popup-content {
+        background-image: url("/static/work.png");
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        padding: 20px;
+        width: 400px;
+        height: 560px;
+        margin: 70px auto;
+        font-family: "Minecraftia", sans-serif;
+        text-align: center;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+      }
+
+      
+
+      .work-info p {
+        font-size: 15px;
+        color: #411a1a;
+        position: relative;
+        text-align: center;
+        top: 85px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 280px;
+        line-height: 1.5;
+        margin: 0;
+      }
+
+      .work-buttons {
+        position: relative;
+        top: 100px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .work-info button {
+        font-size: 11px;
+        padding: 6px 12px;
+        min-width: 180px;
+        border: none;
+        border-radius: 8px;
+        background: #723823;
+        color: #fff;
+        cursor: pointer;
+      }
+
+      .work-info .glass-btn:hover{
+        background: #8a0b2f !important;
+        color: #fff !important;
+        transform: scale(1.05);
+      }
+
+      .work-close-btn {
+        margin-top: 5px;
+        padding: 8px 16px;
+        border: none;
+        border-radius: 8px;
+        background: #792619;
+        color: #fff;
+        cursor: pointer;
+        position: absolute;
+        bottom: 110px;
+        right: 45%;
+      }
+
+      .popup-upper .popup-content,
+      .popup-circle .popup-content,
+      .popup-triangle .popup-content,
+      .popup-linkedlist .popup-content,
+      .popup-infix .popup-content, .popup-queue .popup-content,
+      .popup-deque .popup-content {
+        background-image: url("/static/uppercase.png");
+        background-size: 100% 100%;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-color: transparent;
+        backdrop-filter: none !important;
+        box-shadow: none !important;
+        width: 560px !important;
+        height: 720px !important;
+        position: fixed !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        margin: 0 !important;
+        padding: 110px 80px 100px 80px !important;
+        font-family: "Minecraftia", sans-serif;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 6px;
+        box-sizing: border-box;
+        pointer-events: auto;
+      }
+
+      .popup-title {
+        margin: 0;
+        font-size: 20px;
+        color: #4f0c0c;
+        line-height: 1;
+        position: relative;
+        top: 15px;
+      }
+
+      .popup-instruction {
+        font-size: 12px;
+        color: #4f0c0c;
+        margin: 0;
+        text-align: center;
+      }
+
+      .tool-input {
+        width: 280px;
+        padding: 6px;
+        font-family: "Minecraftia", sans-serif;
+        font-size: 12px;
+        border: 2px solid #723823;
+        border-radius: 6px;
+        outline: none;
+        margin: 0;
+        text-align: center;
+        box-sizing: border-box;
+        background: #ffffff;
+      }
+
+      .tool-btn {
+        width: 180px;
+        padding: 6px 12px;
+        font-family: "Minecraftia", sans-serif;
+        font-size: 12px;
+        background: #723823;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: transform 0.2s, background 0.2s;
+        margin: 0;
+      }
+
+      .tool-btn:hover {
+        background: #8a0b2f;
+        transform: scale(1.03);
+      }
+
+      .ll-action-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+        width: 280px;
+        margin: 0;
+      }
+
+      .ll-action-grid button {
+        width: 100%;
+        padding: 6px 4px;
+        font-size: 10px;
+      }
+
+      .result-box {
+        width: 280px;
+        background: rgba(255, 255, 255, 0.9);
+        border: 2px dashed #723823;
+        border-radius: 6px;
+        padding: 6px 10px;
+        color: #4f0c0c;
+        font-size: 11px;
+        word-break: break-word;
+        box-sizing: border-box;
+        margin: 0;
+      }
+
+      .result-text {
+        margin: 2px 0 0 0;
+        font-size: 12px;
+        font-weight: bold;
+        color: #723823;
+      }
+
+      .visual-canvas {
+        margin: 0;
+        border: 1px solid #723823;
+        border-radius: 6px;
+        background: #fff8f0;
+      }
+
+      .popup-upper .close-btn,
+      .popup-circle .close-btn,
+      .popup-triangle .close-btn,
+      .popup-linkedlist .close-btn,
+      .popup-infix .close-btn,
+      .popup-queue .close-btn,
+      .popup-deque .close-btn {
+        color: #fff;
+        background: #723823;
+        position: absolute !important;
+        top: 550px !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important; 
+        width: 110px;
+        height: 45px;
+        padding: 8px 16px;
+        font-family: "Minecraftia", sans-serif;
+        font-size: 12px;
+        border-radius: 6px;
+        border: none;
+        cursor: pointer;
+        z-index: 10;
+      }
+
+      .music-top-btn {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 10px 18px;
+        font-size: 14px;
+        min-width: unset;
+        z-index: 1000;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h2 class="subheading">-and to my programming works</h2>
+
+    <div class="sidebar-down">
+      <button class="glass-btn">Profile</button>
+      <button class="glass-btn">Contact</button>
+      <button class="glass-btn">Work</button>
+    </div>
+
+    <div id="profile-popup" class="popup">
+      <div class="popup-content">
+        <img src="/static/star.png" alt="Star Icon" class="star-icon" />
+        <img src="/static/bar_code.png" alt="Bar Code" class="bar-code-icon" />
+        <div class="popup-picture">
+          <img src="/static/profile.jpg" alt="Profile Photo" />
+          <div class="popup-text">
+            <h2>Personal Information</h2>
+            <div class="popup-p">
+              <p>NAME: Villaverde, Princess Jane M.</p>
+              <p>AGE: 19 years old</p>
+              <p>ADDRESS: B2 L4, Greenforest, Brgy. Dela Paz, Antipolo City, Rizal, 1870, Philippines</p>
+              <p>COURSE: Bachelor of Science in Computer Engineering</p>
+            </div>
+          </div>
+        </div>
+        <button class="close-btn">X</button>
+      </div>
+    </div>
+
+    <div id="contact-popup" class="contact-popup">
+      <div class="contact-popup-content">
+        <h2>Contact Information:</h2>
+        <div class="contact-info">
+          <p>Feel free to reach out to me through the following channels:</p>
+          <p>Email/Webmail:</p>
+          <p>princessvillaverde08@gmail.com<br>princessjanemvillaverde@iskolar.bayan.pup.edu.ph</p>
+          <p>Phone: +63 912 345 6789</p>
+          <p>Facebook: princessjane.villaverde.3</p>
+          <p>Instagram: @yourhighness.noshi</p>
+        </div>
+        <button class="contact-close-btn">X</button>
+      </div>
+    </div>
+
+    <div id="work-popup" class="work-popup">
+      <div class="work-popup-content">
+        <div class="work-info">
+          <p>Here are some of my programming projects:</p>
+          <div class="work-buttons">
+            <button id="upper-btn" class="glass-btn">To Upper Case</button>
+            <button id="circle-btn" class="glass-btn">Area of a Circle</button>
+            <button id="triangle-btn" class="glass-btn">Area of a Triangle</button>
+            <button id="linkedlist-btn" class="glass-btn">Linked List</button>
+            <button id="infix-btn" class="glass-btn">Infix to Postfix</button>
+            <button id="queue-btn" class="glass-btn">Queue</button>
+            <button id="deque-btn" class="glass-btn">Deque</button>
+          </div>
+        </div>
+        <button class="work-close-btn">X</button>
+      </div>
+    </div>
+
+    <div id="upper-popup" class="popup-upper">
+      <div class="popup-content">
+        <h2 class="popup-title">To Upper Case</h2>
+        <p class="popup-instruction">Insert text to convert to upper case:</p>
+        <input type="text" id="upper-input" class="tool-input" placeholder="Type here..." />
+        <button id="convert-btn" class="tool-btn">Convert</button>
+        <div class="result-box">
+          <span>Result:</span>
+          <p id="upper-result" class="result-text">-</p>
+        </div>
+        <button class="close-btn">Close</button>
+      </div>
+    </div>
+
+    <div id="circle-popup" class="popup-circle">
+      <div class="popup-content">
+        <h2 class="popup-title">Area of a Circle</h2>
+        <p class="popup-instruction">Formula: πr² | Enter Radius (r):</p>
+        <input type="number" id="circle-radius" class="tool-input" placeholder="Radius (r)..." min="0" step="any" />
+        <button id="calc-circle-btn" class="tool-btn">Calculate</button>
+        <div class="result-box">
+          <span>Calculated Area:</span>
+          <p id="circle-result" class="result-text">-</p>
+        </div>
+        <canvas id="circle-canvas" class="visual-canvas" width="170" height="80"></canvas>
+        <button class="close-btn">Close</button>
+      </div>
+    </div>
+
+    <div id="triangle-popup" class="popup-triangle">
+      <div class="popup-content">
+        <h2 class="popup-title">Area of a Triangle</h2>
+        <p class="popup-instruction">Formula: ½ × Base × Height</p>
+        <input type="number" id="triangle-base" class="tool-input" placeholder="Base (b)..." min="0" step="any" />
+        <input type="number" id="triangle-height" class="tool-input" placeholder="Height (h)..." min="0" step="any" />
+        <button id="calc-triangle-btn" class="tool-btn">Calculate</button>
+        <div class="result-box">
+          <span>Calculated Area:</span>
+          <p id="triangle-result" class="result-text">-</p>
+        </div>
+        <canvas id="triangle-canvas" class="visual-canvas" width="170" height="70"></canvas>
+        <button class="close-btn">Close</button>
+      </div>
+    </div>
+
+    <div id="linkedlist-popup" class="popup-linkedlist">
+      <div class="popup-content">
+        <h2 class="popup-title">Linked List</h2>
+        <p class="popup-instruction">Manipulate nodes in a Linked List:</p>
+        <input type="text" id="ll-input" class="tool-input" placeholder="Node Value..." />
+        <div class="ll-action-grid">
+          <button id="ll-add-start-btn" class="tool-btn">Add Head</button>
+          <button id="ll-add-end-btn" class="tool-btn">Add Tail</button>
+          <button id="ll-rem-start-btn" class="tool-btn">Remove Head</button>
+          <button id="ll-rem-end-btn" class="tool-btn">Remove Tail</button>
+          <button id="ll-search-btn" class="tool-btn">Search Value</button>
+          <button id="ll-rem-val-btn" class="tool-btn">Remove Value</button>
+        </div>
+        <div class="result-box">
+          <span>Status Output:</span>
+          <p id="ll-result" class="result-text">-</p>
+        </div>
+        <canvas id="ll-canvas" class="visual-canvas" width="280" height="65"></canvas>
+        <button class="close-btn">Close</button>
+      </div>
+    </div>
+
+    <div id="infix-popup" class="popup-infix">
+      <div class="popup-content">
+        <h2 class="popup-title">Infix to Postfix</h2>
+        <p class="popup-instruction">Enter Infix Expression (e.g., A+B*C):</p>
+        <input type="text" id="infix-input" class="tool-input" placeholder="e.g., (A+B)*C" />
+        <button id="convert-infix-btn" class="tool-btn">Convert to Postfix</button>
+        <div class="result-box">
+          <span>Postfix Result:</span>
+          <p id="infix-result" class="result-text">-</p>
+        </div>
+        <button class="close-btn">Close</button>
+      </div>
+    </div>
+
+    <div id="queue-popup" class="popup-queue">
+      <div class="popup-content">
+        <h2 class="popup-title">Queue (FIFO)</h2>
+        <p class="popup-instruction">First-In, First-Out Operations:</p>
+        <input type="text" id="q-input" class="tool-input" placeholder="Value..." />
+        <div class="ll-action-grid">
+          <button id="q-enqueue-btn" class="tool-btn">Enqueue</button>
+          <button id="q-dequeue-btn" class="tool-btn">Dequeue</button>
+        </div>
+        <div class="result-box">
+          <span>Status Output:</span>
+          <p id="q-result" class="result-text">-</p>
+        </div>
+        <button class="close-btn">Close</button>
+      </div>
+    </div>
+
+    <div id="deque-popup" class="popup-deque">
+      <div class="popup-content">
+        <h2 class="popup-title">Deque (Double-Ended)</h2>
+        <p class="popup-instruction">Double-Ended Queue Operations:</p>
+        <input type="text" id="dq-input" class="tool-input" placeholder="Value..." />
+        <div class="ll-action-grid">
+          <button id="dq-add-front-btn" class="tool-btn">Add Front</button>
+          <button id="dq-add-rear-btn" class="tool-btn">Add Rear</button>
+          <button id="dq-rem-front-btn" class="tool-btn">Remove Front</button>
+          <button id="dq-rem-rear-btn" class="tool-btn">Remove Rear</button>
+        </div>
+        <div class="result-box">
+          <span>Status Output:</span>
+          <p id="dq-result" class="result-text">-</p>
+        </div>
+        <button class="close-btn">Close</button>
+      </div>
+    </div>
+
+    <audio id="bg-music" src="/static/background_music.mp3" loop></audio>
+
+    <button id="music-toggle-btn" class="glass-btn music-top-btn">Music: OFF</button>
+
+    <script>
+      // --- Three.js Background & 3D Model Setup ---
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera.position.set(0, 0, 200);
+
+      const video = document.createElement("video");
+      video.src = "/static/ghibli.mp4";
+      video.loop = true;
+      video.muted = true;
+      video.play();
+
+      const videoTexture = new THREE.VideoTexture(video);
+      videoTexture.minFilter = THREE.LinearFilter;
+      videoTexture.magFilter = THREE.LinearFilter;
+      videoTexture.encoding = THREE.sRGBEncoding; // <-- Add this to fix video color saturation
+      scene.background = videoTexture;
+
+      const renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.outputEncoding = THREE.sRGBEncoding; // <-- Add this to match proper color output
+      document.body.appendChild(renderer.domElement);
+
+      const ambientLight = new THREE.AmbientLight(0xfff9d8, 0.2);
+      scene.add(ambientLight);
+
+      const fontLoader = new THREE.FontLoader();
+      fontLoader.load("/static/Minecraft.json", function (font) {
+        const textGeo = new THREE.TextGeometry("WELCOME TO MY WEBSITE", { font: font, size: 15, height: 2 });
+        textGeo.center();
+        const textMaterial = new THREE.MeshPhongMaterial({ color: 0xc9184a, shininess: 25, specular: 0xffffff });
+        const textMesh = new THREE.Mesh(textGeo, textMaterial);
+        textMesh.position.set(0, 90, 0);
+        scene.add(textMesh);
+      });
+
+      const spotLight = new THREE.SpotLight(0xffffff, 1.5, 1000, Math.PI / 2, 0.5, 2);
+      spotLight.position.set(-100, 100, 100);
+      scene.add(spotLight);
+
+      function animateLight() {
+        requestAnimationFrame(animateLight);
+        spotLight.position.x = Math.sin(Date.now() * 0.001) * 150;
+      }
+      animateLight();
+
+      const loader = new THREE.PLYLoader();
+      loader.load("/static/yourMesh.ply", function (geometry) {
+        geometry.computeVertexNormals();
+        geometry.center();
+        const material = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.1, metalness: 0.1 });
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.scale.set(2, 2, 2);
+        scene.add(mesh);
+
+        function animate() {
+          requestAnimationFrame(animate);
+          mesh.rotation.y += 0.03;
+          renderer.render(scene, camera);
+        }
+        animate();
+      });
+
+      window.addEventListener("resize", () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+
+      // --- Popups Navigation ---
+      const profileBtn = document.querySelector(".sidebar-down .glass-btn:nth-child(1)");
+      const profilePopup = document.getElementById("profile-popup");
+      profileBtn.onclick = () => profilePopup.style.display = "block";
+      profilePopup.querySelector(".close-btn").onclick = () => profilePopup.style.display = "none";
+
+      const contactBtn = document.querySelector(".sidebar-down .glass-btn:nth-child(2)");
+      const contactPopup = document.getElementById("contact-popup");
+      contactBtn.onclick = () => contactPopup.style.display = "block";
+      contactPopup.querySelector(".contact-close-btn").onclick = () => contactPopup.style.display = "none";
+
+      const workBtn = document.querySelector(".sidebar-down .glass-btn:nth-child(3)");
+      const workPopup = document.getElementById("work-popup");
+      workBtn.onclick = () => workPopup.style.display = "block";
+      workPopup.querySelector(".work-close-btn").onclick = () => workPopup.style.display = "none";
+
+      document.getElementById("upper-btn").onclick = () => { workPopup.style.display = "none"; document.getElementById("upper-popup").style.display = "block"; };
+      document.getElementById("circle-btn").onclick = () => { workPopup.style.display = "none"; document.getElementById("circle-popup").style.display = "block"; drawCircleGraph(0); };
+      document.getElementById("triangle-btn").onclick = () => { workPopup.style.display = "none"; document.getElementById("triangle-popup").style.display = "block"; drawTriangleGraph(0, 0); };
+      document.getElementById("linkedlist-btn").onclick = () => { workPopup.style.display = "none"; document.getElementById("linkedlist-popup").style.display = "block"; fetchLinkedListNodes('search', ''); };
+      document.getElementById("infix-btn").onclick = () => { workPopup.style.display = "none"; document.getElementById("infix-popup").style.display = "block"; };
+      document.getElementById("queue-btn").onclick = () => { workPopup.style.display = "none"; document.getElementById("queue-popup").style.display = "block"; };
+      document.getElementById("deque-btn").onclick = () => { workPopup.style.display = "none"; document.getElementById("deque-popup").style.display = "block"; };
+
+      document.querySelectorAll(".popup-upper, .popup-circle, .popup-triangle, .popup-linkedlist, .popup-infix, .popup-queue, .popup-deque").forEach((childPopup) => {
+        const childCloseBtn = childPopup.querySelector(".close-btn");
+        if (childCloseBtn) {
+          childCloseBtn.onclick = () => { childPopup.style.display = "none"; workPopup.style.display = "block"; };
+        }
+        // --- Close Popups When Clicking Outside ---
+      const allPopups = document.querySelectorAll(
+        ".popup, .contact-popup, .work-popup, .popup-upper, .popup-circle, .popup-triangle, .popup-linkedlist, .popup-infix"
+      );
+
+      allPopups.forEach((popup) => {
+        popup.addEventListener("click", (e) => {
+          // Check if the user clicked directly on the dark background overlay, not inside the content box
+          if (e.target === popup) {
+            popup.style.display = "none";
+            
+            // If it's a child tool popup closing by clicking outside, return to the Work popup
+            if (popup.classList.contains("popup-upper") ||
+                popup.classList.contains("popup-circle") ||
+                popup.classList.contains("popup-triangle") ||
+                popup.classList.contains("popup-linkedlist") ||
+                popup.classList.contains("popup-infix")) {
+              document.getElementById("work-popup").style.display = "block";
+            }
+          }
+        });
+      });
+    });
+
+      // --- Background Music Control (Top Right) ---
+      const bgMusic = document.getElementById("bg-music");
+      const musicBtn = document.getElementById("music-toggle-btn");
+      let isMusicPlaying = false;
+
+      bgMusic.volume = 0.4; // Set volume to 40%
+
+      musicBtn.onclick = () => {
+        if (!isMusicPlaying) {
+          bgMusic.play().then(() => {
+            isMusicPlaying = true;
+            musicBtn.textContent = "Music: ON";
+          }).catch(err => {
+            console.log("Audio play blocked/failed:", err);
+          });
+        } else {
+          bgMusic.pause();
+          isMusicPlaying = false;
+          musicBtn.textContent = "Music: OFF";
+        }
+      };
+
+      // Helper function to hide every single popup on the screen
+      function closeAllPopups() {
+        document.querySelectorAll(
+          ".popup, .contact-popup, .work-popup, .popup-upper, .popup-circle, .popup-triangle, .popup-linkedlist, .popup-infix, .popup-queue, .popup-deque"
+        ).forEach(p => p.style.display = "none");
+      }
+
+      // --- Sidebar Navigation (Swaps directly) ---
+      // Assuming your sidebar buttons have IDs or classes. 
+      // If using query selectors for Profile, Contact, Work sidebar buttons:
+      document.querySelectorAll(".sidebar-down .glass-btn").forEach(btn => {
+        const text = btn.textContent.trim();
+        if (text === "Profile") {
+          btn.onclick = () => { closeAllPopups(); document.querySelector(".popup").style.display = "block"; };
+        } else if (text === "Contact") {
+          btn.onclick = () => { closeAllPopups(); document.querySelector(".contact-popup").style.display = "block"; };
+        } else if (text === "Work") {
+          btn.onclick = () => { closeAllPopups(); document.querySelector(".work-popup").style.display = "block"; };
+        }
+      });
+
+      // --- Work Tool Buttons (Swaps directly from Work menu) ---
+      document.getElementById("upper-btn").onclick = () => { closeAllPopups(); document.getElementById("upper-popup").style.display = "block"; };
+      document.getElementById("circle-btn").onclick = () => { closeAllPopups(); document.getElementById("circle-popup").style.display = "block"; drawCircleGraph(0); };
+      document.getElementById("triangle-btn").onclick = () => { closeAllPopups(); document.getElementById("triangle-popup").style.display = "block"; drawTriangleGraph(0, 0); };
+      document.getElementById("linkedlist-btn").onclick = () => { closeAllPopups(); document.getElementById("linkedlist-popup").style.display = "block"; fetchLinkedListNodes('search', ''); };
+      document.getElementById("infix-btn").onclick = () => { closeAllPopups(); document.getElementById("infix-popup").style.display = "block"; };
+      document.getElementById("queue-btn").onclick = () => { closeAllPopups(); document.getElementById("queue-popup").style.display = "block"; };
+      document.getElementById("deque-btn").onclick = () => { closeAllPopups(); document.getElementById("deque-popup").style.display = "block"; };
+
+      // --- Close Buttons (Return to Work Menu or Close completely) ---
+      document.querySelectorAll(".popup-upper, .popup-circle, .popup-triangle, .popup-linkedlist, .popup-infix, .popup-queue, .popup-deque").forEach((childPopup) => {
+        const childCloseBtn = childPopup.querySelector(".close-btn");
+        if (childCloseBtn) {
+          childCloseBtn.onclick = () => { 
+            closeAllPopups(); 
+            document.querySelector(".work-popup").style.display = "block"; // Goes back to work menu
+          };
+        }
+      });
+      // --- 1. Python-Powered Upper Case ---
+      document.getElementById("convert-btn").onclick = async () => {
+        const text = document.getElementById("upper-input").value;
+        const res = await fetch('/api/uppercase', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text })
+        });
+        const data = await res.json();
+        document.getElementById("upper-result").textContent = data.result;
+      };
+
+      // --- 2. Python-Powered Circle Area & Canvas ---
+      const circleRadiusInput = document.getElementById("circle-radius");
+      async function processCircle() {
+        const radius = circleRadiusInput.value;
+        const res = await fetch('/api/circle', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ radius })
+        });
+        const data = await res.json();
+        document.getElementById("circle-result").textContent = data.area;
+        drawCircleGraph(data.valid ? data.radius : 0);
+      }
+      document.getElementById("calc-circle-btn").onclick = processCircle;
+      circleRadiusInput.oninput = processCircle;
+
+      function drawCircleGraph(r) {
+        const canvas = document.getElementById("circle-canvas");
+        const ctx = canvas.getContext("2d");
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const centerX = canvas.width / 2, centerY = canvas.height / 2;
+        const maxRadius = Math.min(centerX, centerY) - 15;
+        const drawRadius = r > 0 ? Math.min(Math.max(r * 4, 12), maxRadius) : 25;
+
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, drawRadius, 0, 2 * Math.PI);
+        ctx.fillStyle = "rgba(201, 24, 74, 0.2)";
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = "#723823";
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.lineTo(centerX + drawRadius, centerY);
+        ctx.strokeStyle = "#c9184a";
+        ctx.stroke();
+
+        ctx.font = "10px Minecraftia, sans-serif";
+        ctx.fillStyle = "#4f0c0c";
+        ctx.fillText(r > 0 ? `r = ${r}` : "r", centerX + drawRadius / 4, centerY - 4);
+      }
+
+      // --- 3. Python-Powered Triangle Area & Canvas ---
+      const triangleBaseInput = document.getElementById("triangle-base");
+      const triangleHeightInput = document.getElementById("triangle-height");
+      async function processTriangle() {
+        const base = triangleBaseInput.value;
+        const height = triangleHeightInput.value;
+        const res = await fetch('/api/triangle', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ base, height })
+        });
+        const data = await res.json();
+        document.getElementById("triangle-result").textContent = data.area;
+        drawTriangleGraph(data.valid ? data.base : 0, data.valid ? data.height : 0);
+      }
+      document.getElementById("calc-triangle-btn").onclick = processTriangle;
+      triangleBaseInput.oninput = processTriangle;
+      triangleHeightInput.oninput = processTriangle;
+
+      function drawTriangleGraph(b, h) {
+        const canvas = document.getElementById("triangle-canvas");
+        const ctx = canvas.getContext("2d");
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const margin = 15;
+        let drawB = b > 0 ? b : 10, drawH = h > 0 ? h : 10;
+        const scale = Math.min((canvas.width - margin * 2) / drawB, (canvas.height - margin * 2) / drawH);
+        const renderW = drawB * scale, renderH = drawH * scale;
+        const x1 = (canvas.width - renderW) / 2, y1 = canvas.height - margin;
+        const x2 = x1 + renderW, y2 = y1, x3 = x1 + renderW / 2, y3 = y1 - renderH;
+
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.lineTo(x3, y3);
+        ctx.closePath();
+        ctx.fillStyle = "rgba(114, 56, 35, 0.2)";
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = "#723823";
+        ctx.stroke();
+
+        ctx.font = "9px Minecraftia, sans-serif";
+        ctx.fillStyle = "#4f0c0c";
+        ctx.fillText(b > 0 ? `b=${b}` : "b", x1 + renderW / 2 - 8, y1 + 12);
+      }
+
+      // --- 4. Python-Powered Linked List ---
+      const llInput = document.getElementById("ll-input");
+      const llResult = document.getElementById("ll-result");
+
+      async function fetchLinkedListNodes(action, value) {
+        const res = await fetch('/api/linkedlist', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action, value })
+        });
+        const data = await res.json();
+        llResult.textContent = data.message;
+        renderLinkedListCanvas(data.nodes);
+        llInput.value = "";
+      }
+
+      function renderLinkedListCanvas(nodes) {
+        const canvas = document.getElementById("ll-canvas");
+        const ctx = canvas.getContext("2d");
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        if (!nodes || nodes.length === 0) {
+          ctx.font = "10px Minecraftia, sans-serif";
+          ctx.fillStyle = "#723823";
+          ctx.textAlign = "center";
+          ctx.fillText("List is empty", canvas.width / 2, canvas.height / 2 + 4);
+          return;
+        }
+
+        const nodeWidth = 32, nodeHeight = 24, gap = 16, startY = (canvas.height - nodeHeight) / 2;
+        const totalWidth = nodes.length * nodeWidth + (nodes.length - 1) * gap;
+        let startX = Math.max(10, (canvas.width - totalWidth) / 2);
+
+        nodes.forEach((val, idx) => {
+          const x = startX + idx * (nodeWidth + gap);
+          ctx.fillStyle = "#ffffff";
+          ctx.strokeStyle = "#723823";
+          ctx.lineWidth = 2;
+          ctx.fillRect(x, startY, nodeWidth, nodeHeight);
+          ctx.strokeRect(x, startY, nodeWidth, nodeHeight);
+
+          ctx.font = "9px Minecraftia, sans-serif";
+          ctx.fillStyle = "#4f0c0c";
+          ctx.textAlign = "center";
+          ctx.fillText(String(val).substring(0, 4), x + nodeWidth / 2, startY + 15);
+
+          if (idx < nodes.length - 1) {
+            const arrowStartX = x + nodeWidth, arrowEndX = x + nodeWidth + gap, arrowY = startY + nodeHeight / 2;
+            ctx.beginPath();
+            ctx.moveTo(arrowStartX, arrowY);
+            ctx.lineTo(arrowEndX, arrowY);
+            ctx.strokeStyle = "#c9184a";
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+          }
+        });
+      }
+
+      document.getElementById("ll-add-start-btn").onclick = () => fetchLinkedListNodes('add_start', llInput.value);
+      document.getElementById("ll-add-end-btn").onclick = () => fetchLinkedListNodes('add_end', llInput.value);
+      document.getElementById("ll-rem-start-btn").onclick = () => fetchLinkedListNodes('rem_start', '');
+      document.getElementById("ll-rem-end-btn").onclick = () => fetchLinkedListNodes('rem_end', '');
+      document.getElementById("ll-search-btn").onclick = () => fetchLinkedListNodes('search', llInput.value);
+      document.getElementById("ll-rem-val-btn").onclick = () => fetchLinkedListNodes('rem_val', llInput.value);
+
+      // --- 5. Python-Powered Infix to Postfix ---
+      document.getElementById("convert-infix-btn").onclick = async () => {
+        const expression = document.getElementById("infix-input").value;
+        const res = await fetch('/api/infix', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ expression })
+        });
+        const data = await res.json();
+        document.getElementById("infix-result").textContent = data.result;
+      };
+
+      // --- Queue API ---
+      async function fetchQueue(action, value) {
+        const res = await fetch('/api/queue', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action, value })
+        });
+        const data = await res.json();
+        document.getElementById("q-result").textContent = data.message + ` [Queue: ${data.nodes.join(', ')}]`;
+        document.getElementById("q-input").value = "";
+      }
+      document.getElementById("q-enqueue-btn").onclick = () => fetchQueue('enqueue', document.getElementById("q-input").value);
+      document.getElementById("q-dequeue-btn").onclick = () => fetchQueue('dequeue', '');
+
+      // --- Deque API ---
+      async function fetchDeque(action, value) {
+        const res = await fetch('/api/deque', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action, value })
+        });
+        const data = await res.json();
+        document.getElementById("dq-result").textContent = data.message + ` [Deque: ${data.nodes.join(', ')}]`;
+        document.getElementById("dq-input").value = "";
+      }
+      document.getElementById("dq-add-front-btn").onclick = () => fetchDeque('add_front', document.getElementById("dq-input").value);
+      document.getElementById("dq-add-rear-btn").onclick = () => fetchDeque('add_rear', document.getElementById("dq-input").value);
+      document.getElementById("dq-rem-front-btn").onclick = () => fetchDeque('rem_front', '');
+      document.getElementById("dq-rem-rear-btn").onclick = () => fetchDeque('rem_rear', '');
+    </script>
+  </body>
+</html>
